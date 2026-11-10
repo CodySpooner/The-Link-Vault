@@ -55,6 +55,12 @@
   #card{position:fixed;z-index:8;right:30px;top:calc(50% + var(--bar)/2);translate:0 -50%;width:330px;display:grid;gap:14px;padding-left:18px;border-left:1px solid var(--line)}
   #card h2{font:800 clamp(24px,2.4vw,36px)/1.04 var(--disp);letter-spacing:-.02em;text-transform:uppercase;overflow-wrap:anywhere}
   #card p{color:#cdd0c8;font-size:13.5px;min-height:3em}
+  .tags{display:flex;flex-wrap:wrap;gap:5px}
+  .tags:empty{display:none}
+  .tag{all:unset;box-sizing:border-box;flex:none;height:26px;padding:0 9px;display:flex;align-items:center;border:1px solid var(--line);font:500 10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);cursor:pointer;transition:color .2s,background .2s,border-color .2s}
+  .tag::before{content:'#';opacity:.6}
+  .tag:hover{color:#000;background:var(--acc);border-color:var(--acc)}
+  .tag:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
   .meta{display:flex;justify-content:space-between;gap:10px;align-items:center}
   #c-cat::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:hsl(var(--h) 90% 62%);margin-right:8px;vertical-align:1px}
   .btn.go{height:46px;justify-content:space-between;padding:0 16px;font-size:12px}
@@ -70,12 +76,14 @@
   @media (min-width:1000px){#index[hidden]{display:block!important}#ix{display:none}}
   @media (max-width:999px){
     #index{width:min(350px,100vw)}
-    #card{left:0;right:0;top:auto;bottom:0;translate:none;width:auto;height:178px;gap:7px;align-content:start;padding:13px 14px;background:rgba(7,8,10,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:0;border-top:1px solid var(--line)}
+    #card{left:0;right:0;top:auto;bottom:0;translate:none;width:auto;height:210px;gap:7px;align-content:start;padding:13px 14px;background:rgba(7,8,10,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:0;border-top:1px solid var(--line)}
     #card h2{font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     #card p{font-size:12.5px;min-height:0;height:2.9em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
     #card .meta.lbl{display:none}
+    .tags{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+    .tag{height:30px}
     .btn.go{height:42px}
-    .hint{left:12px;bottom:190px}
+    .hint{left:12px;bottom:222px}
     #tip,#cur{display:none}
   }
   @media (max-width:759px){
@@ -106,6 +114,7 @@
   <span class="lbl" id="c-cat"></span>
   <h2 id="c-title"></h2>
   <p id="c-note"></p>
+  <div class="tags" id="c-tags"></div>
   <div class="meta lbl"><span id="c-host"></span><span id="c-date"></span></div>
   <a class="btn go" id="c-go" target="_blank" rel="noopener"><span>Open site</span><span aria-hidden="true">↗</span></a>
 </aside>
@@ -146,11 +155,15 @@ let cat = '', cur = null, hov = null, hot = null;
 const nearest = x => { const k0 = Math.round(x); for (let d = 0; d < N; d++) for (const k of [k0 + d, k0 - d]) if (items[mod(k, N)].on) return k; return k0; };
 const fly = it => V.tgt = it.layer + N * Math.round((V.tgt - it.layer) / N);     // wind to the nearest copy of a card
 function step(d) { let k = Math.round(V.tgt); for (let n = 0; n < N; n++) { k += d; if (items[mod(k, N)].on) break; } V.tgt = k; }
+// search: every word must appear in the title, note, site or tags; a word starting with # matches tags only ("#ui" finds the UI tag, not "build")
+const slug = t => t.toLowerCase().replace(/\s+/g, '-');
+const hit = (l, v) => v.split(/\s+/).every(w => w[0] === '#' ? (l.tags || []).some(t => slug(t).startsWith(w.slice(1)))
+  : (l.title + ' ' + l.note + ' ' + host(l.url) + ' ' + (l.tags || []).join(' ')).toLowerCase().includes(w));
 function apply() {
   const v = q.value.trim().toLowerCase();
   let n = 0, first = null;
   for (const it of items) if (it.kind === 'link') {
-    it.on = (!cat || it.l.cat === cat) && (!v || (it.l.title + ' ' + it.l.note + ' ' + host(it.l.url)).toLowerCase().includes(v));
+    it.on = (!cat || it.l.cat === cat) && (!v || hit(it.l, v));
     it.row.hidden = !it.on; n += it.on; if (it.on) first ||= it;
   }
   groups.forEach((g, k) => { const c = g.filter(it => it.kind === 'link' && it.on).length; g[0].on = !!c; sections[k].hidden = !c; sections[k].querySelector('.lbl').textContent = pad(c); });
@@ -165,6 +178,7 @@ function show(it) {                                      // the card in front fi
   $('c-cat').textContent = L ? `${pad(it.col + 1)} / ${it.c.name}` : `Collection ${pad(it.col + 1)} of ${pad(it.of)}`;
   $('c-title').textContent = L ? it.l.title : it.c.name; $('c-note').textContent = L ? it.l.note : it.c.blurb || '';
   $('c-host').textContent = L ? host(it.l.url) : `${pad(it.n)} links`; $('c-date').textContent = L ? 'Added ' + it.l.added : 'Keep turning';
+  $('c-tags').innerHTML = L ? (it.l.tags || []).map(t => `<button class="tag" data-t="${esc(slug(t))}">${esc(t)}</button>`).join('') : '';
   $('c-go').hidden = !L; if (L) $('c-go').href = it.l.url;
   document.querySelector('.r.on')?.classList.remove('on');
   if (L) it.row.classList.add('on');
@@ -172,6 +186,7 @@ function show(it) {                                      // the card in front fi
 }
 $('chips').onclick = e => { const b = e.target.closest('.chip'); if (b) { cat = b.dataset.c; apply(); } };
 q.oninput = apply;
+$('c-tags').onclick = e => { const b = e.target.closest('.tag'); if (b) { q.value = '#' + b.dataset.t; apply(); } };   // a tag is a one-click search
 $('clear').onclick = () => { q.value = ''; cat = ''; apply(); q.focus(); };
 $('ix').onclick = () => { const open = $('index').hidden; $('index').hidden = !open; $('ix').setAttribute('aria-expanded', open); };
 $('index').addEventListener('pointerover', e => { const r = e.target.closest('.r'); if (r) fly(hot = items[r.dataset.k]); });
@@ -299,7 +314,7 @@ function upload(it, icon) {
 function size() {                                        // the tower stands between the index and the side panel, or above the bottom sheet on small screens
   DPR = Math.min(devicePixelRatio, 2); W = innerWidth; H = innerHeight;
   cv.width = W * DPR; cv.height = H * DPR; gl.viewport(0, 0, cv.width, cv.height);
-  const wide = W >= 1000, bar = W < 760 ? 103 : 55, l = wide ? 300 : 0, r = wide ? 380 : 0, b = wide ? 0 : 178;
+  const wide = W >= 1000, bar = W < 760 ? 103 : 55, l = wide ? 300 : 0, r = wide ? 380 : 0, b = wide ? 0 : 210;
   const half = wide ? Math.min(.36 * H, .44 * (W - l - r)) : Math.min(.62 * W, .42 * (H - bar - b));
   F = half * 2 / H * Math.sqrt(CAM * CAM - 1); OX = l + (W - l - r) / 2; OY = bar + (H - bar - b) / 2;
   gl.uniform2f(U.R, W, H); gl.uniform2f(U.O, OX, OY); gl.uniform1f(U.F, F); gl.uniform1f(U.DPR, DPR);
