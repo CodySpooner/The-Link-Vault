@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Xody Links</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#07080a;--fg:#eef0ea;--dim:#8b9089;--line:rgba(238,240,234,.14);--acc:#c6ff3d;--mono:'JetBrains Mono',ui-monospace,monospace;--disp:'Unbounded',system-ui,sans-serif;--bar:55px;--ix:300px}
+  *{box-sizing:border-box;margin:0}
+  [hidden]{display:none!important}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font:400 13px/1.5 var(--mono);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+  a{color:inherit;text-decoration:none}
+  :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .lbl{font:500 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+  #gl{position:fixed;inset:0;width:100%;height:100%;z-index:0;touch-action:none;cursor:grab;outline-offset:-4px}
+  #gl.drag{cursor:grabbing}#gl.over{cursor:pointer}
+
+  .bar{position:fixed;inset:0 0 auto;z-index:10;display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:10px 18px;background:rgba(7,8,10,.74);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+  .brand{font:800 17px/1 var(--disp);letter-spacing:-.01em;text-transform:uppercase;display:flex;align-items:baseline;gap:9px}
+  .brand i{font:500 10px var(--mono);font-style:normal;color:var(--acc);letter-spacing:.1em}
+  .chips{display:flex;gap:4px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip,.btn{all:unset;box-sizing:border-box;flex:none;display:flex;align-items:center;gap:7px;height:32px;padding:0 11px;font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);cursor:pointer;transition:color .2s,background .2s,border-color .2s}
+  .chip::before{content:'';width:6px;height:6px;border-radius:50%;background:hsl(var(--h) 90% 62%)}
+  .chip:hover,.btn:hover{color:var(--fg)}
+  .chip[aria-current=true]{color:#000;background:var(--acc)}
+  .chip[aria-current=true]::before{background:#000}
+  .btn{border:1px solid var(--line);color:var(--fg)}
+  .btn[aria-expanded=true],.btn.go{background:var(--acc);border-color:var(--acc);color:#000}
+  .chip:focus-visible,.btn:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+  .find{position:relative}
+  .find input{width:200px;height:34px;padding:0 34px 0 12px;background:transparent;border:1px solid var(--line);border-radius:0;color:var(--fg);font:400 12px var(--mono);outline:0;transition:border-color .2s}
+  .find input::placeholder{color:var(--dim)}
+  .find input:focus{border-color:var(--acc)}
+  .find kbd{position:absolute;right:8px;top:50%;translate:0 -50%;font:500 10px var(--mono);color:var(--dim);border:1px solid var(--line);padding:1px 5px;pointer-events:none}
+
+  #index{position:fixed;z-index:9;left:0;top:var(--bar);bottom:0;width:var(--ix);overflow-y:auto;padding:6px 0 90px;background:rgba(7,8,10,.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-right:1px solid var(--line);scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  #index h2{display:flex;align-items:center;padding:18px 18px 8px;font:800 12px/1 var(--disp);letter-spacing:.02em;text-transform:uppercase}
+  #index h2::before{content:'';width:8px;height:8px;border-radius:50%;background:hsl(var(--h) 90% 62%);margin-right:9px}
+  #index h2 span{margin-left:auto}
+  .r{position:relative;display:grid;grid-template-columns:54px 1fr;gap:0 8px;padding:8px 18px;min-height:44px;align-content:center;border-top:1px solid var(--line);transition:background .15s,color .15s}
+  .r i{font:500 10px var(--mono);font-style:normal;color:var(--dim);letter-spacing:.06em;grid-row:span 2;align-self:center}
+  .r b{font-weight:500;font-size:13px}
+  .r span{font-size:11px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .r.on{background:rgba(198,255,61,.08)}
+  .r.on::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc)}
+  .r.on i{color:var(--acc)}
+  .r:hover,.r:focus-visible{background:var(--fg);color:#000;outline:0}
+  .r:hover i,.r:hover span,.r:focus-visible i,.r:focus-visible span{color:#000}
+
+  #card{position:fixed;z-index:8;right:30px;top:calc(50% + var(--bar)/2);translate:0 -50%;width:330px;display:grid;gap:14px;padding-left:18px;border-left:1px solid var(--line)}
+  #card h2{font:800 clamp(24px,2.4vw,36px)/1.04 var(--disp);letter-spacing:-.02em;text-transform:uppercase;overflow-wrap:anywhere}
+  #card p{color:#cdd0c8;font-size:13.5px;min-height:3em}
+  .meta{display:flex;justify-content:space-between;gap:10px;align-items:center}
+  #c-cat::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:hsl(var(--h) 90% 62%);margin-right:8px;vertical-align:1px}
+  .btn.go{height:46px;justify-content:space-between;padding:0 16px;font-size:12px}
+  .btn.go:hover{background:var(--fg);border-color:var(--fg);color:#000}
+  .hint{position:fixed;left:calc(var(--ix) + 18px);bottom:18px;z-index:5;pointer-events:none;display:grid;gap:3px;padding:9px 11px;background:rgba(7,8,10,.8);border:1px solid var(--line)}
+  .hint b{color:var(--fg);font-weight:500}
+  #empty{position:fixed;inset:0;z-index:4;display:grid;place-content:center;justify-items:center;gap:14px;text-align:center;padding:18px;pointer-events:none}
+  #empty h2{font:800 clamp(30px,6vw,84px)/.98 var(--disp);letter-spacing:-.03em;text-transform:uppercase}
+  #empty .btn{pointer-events:auto}
+  #cur{position:fixed;left:0;top:0;z-index:8;pointer-events:none;height:26px;padding:0 10px;display:flex;align-items:center;background:var(--acc);color:#000;font:500 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;opacity:0;transition:opacity .2s}
+  #cur.on{opacity:1}
+
+  @media (min-width:1000px){#index[hidden]{display:block!important}#ix{display:none}}
+  @media (max-width:999px){
+    #index{width:min(350px,100vw)}
+    #card{left:0;right:0;top:auto;bottom:0;translate:none;width:auto;height:178px;gap:7px;align-content:start;padding:13px 14px;background:rgba(7,8,10,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:0;border-top:1px solid var(--line)}
+    #card h2{font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #card p{font-size:12.5px;min-height:0;height:2.9em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    #card .meta.lbl{display:none}
+    .btn.go{height:42px}
+    .hint{left:12px;bottom:190px}
+    #tip,#cur{display:none}
+  }
+  @media (max-width:759px){
+    :root{--bar:103px}
+    .bar{padding:8px 12px;gap:6px 8px}
+    .brand i{display:none}
+    .find{flex:1}
+    .find input{width:100%;height:40px;font-size:16px}
+    .find kbd{display:none}
+    .btn{height:40px}
+    .chips{order:3;flex-basis:100%;min-height:40px;margin:0 -12px;padding:0 8px}
+    .chip{height:40px}
+  }
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="gl" tabindex="0" aria-label="A spiral tower of saved links. Scroll, drag or use the arrow keys to turn it, Enter opens the link in front. The index lists every link."></canvas>
+<header class="bar">
+  <a class="brand" href="#">Xody<i>LINKS</i></a>
+  <nav class="chips" id="chips" aria-label="Collections"></nav>
+  <label class="find"><span class="sr">Search links</span><input id="q" type="search" placeholder="Search links" autocomplete="off"><kbd>/</kbd></label>
+  <button class="btn" id="ix" aria-expanded="false" aria-controls="index">Index</button>
+</header>
+<aside id="index" aria-label="All links" hidden></aside>
+<aside id="card" aria-live="polite">
+  <span class="lbl" id="c-cat"></span>
+  <h2 id="c-title"></h2>
+  <p id="c-note"></p>
+  <div class="meta lbl"><span id="c-host"></span><span id="c-date"></span></div>
+  <a class="btn go" id="c-go" target="_blank" rel="noopener"><span>Open site</span><span aria-hidden="true">↗</span></a>
+</aside>
+<div id="empty" hidden><h2>Nothing<br>on the reel</h2><p class="lbl">No link matches that search.</p><button class="btn" id="clear">Clear search</button></div>
+<div class="hint lbl"><span id="count"></span><span id="tip"><b>Scroll</b> to turn the tower / <b>click</b> the front card to open it</span><span id="sample"></span></div>
+<div id="cur" aria-hidden="true">View</div>
+
+<!-- ponytail: cache-bust so a freshly saved link always shows without a hard refresh; document.write keeps it synchronous and working on file:// -->
+<script>document.write(`<script src="links.js?v=${Date.now()}"><\/script>`)</script>
+<script>
+const { categories: cats, links } = window.LINKBASE;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const host = u => new URL(u).hostname.replace(/^www\./, '');
+const pad = (n, w = 2) => String(n).padStart(w, '0');
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const mod = (a, n) => ((a % n) + n) % n;
+const hash = s => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
+
+// The tower is one long strip of cards wound into a spiral: each collection's title card, then its links. `layer` is both the card's place on the strip and its texture slot.
+const items = [];
+const groups = cats.map((c, ci) => ({ c, ci, ls: links.map((l, i) => ({ l, i })).filter(o => o.l.cat === c.id) })).filter(o => o.ls.length)
+  .map((o, k, all) => [{ kind: 'cat', c: o.c, ci: o.ci, n: o.ls.length, of: all.length }, ...o.ls.map(x => ({ kind: 'link', c: o.c, ci: o.ci, l: x.l, i: x.i }))]
+    .map((it, j) => Object.assign(it, { col: k, j, layer: items.push(it) - 1, on: true, dim: 0, lift: 0 })));
+const N = items.length;
+
+$('chips').innerHTML = `<button class="chip" data-c="" style="--h:75">All</button>` + groups.map(g => `<button class="chip" data-c="${g[0].c.id}" style="--h:${g[0].c.hue}">${esc(g[0].c.name)}</button>`).join('');
+$('index').innerHTML = groups.map(g => `<section style="--h:${g[0].c.hue}"><h2>${esc(g[0].c.name)}<span class="lbl"></span></h2>${g.slice(1).map(it =>
+  `<a class="r" href="${esc(it.l.url)}" target="_blank" rel="noopener" data-k="${it.layer}"><i>HX-${pad(it.i + 1, 3)}</i><b>${esc(it.l.title)}</b><span>${esc(host(it.l.url))}</span></a>`).join('')}</section>`).join('');
+document.querySelectorAll('.r').forEach(r => items[r.dataset.k].row = r);
+const sections = [...$('index').children];
+if (links.some(l => l.sample)) $('sample').textContent = 'Sample links shown';
+
+/* ---------- state: `u` is how far the strip has been wound, in cards; the card at round(u) faces you ---------- */
+const V = { u: reduce ? 0 : -5, tgt: 0, vel: 0, tw: 0, yaw: 0, ca: 0 };
+const q = $('q');
+let cat = '', cur = null, hov = null, hot = null;
+const nearest = x => { const k0 = Math.round(x); for (let d = 0; d <= N; d++) for (const k of [k0 + d, k0 - d]) if (items[mod(k, N)].on) return k; return k0; };
+const fly = it => V.tgt = it.layer + N * Math.round((V.tgt - it.layer) / N);     // wind to the nearest copy of a card
+function step(d) { let k = Math.round(V.tgt); for (let n = 0; n < N; n++) { k += d; if (items[mod(k, N)].on) break; } V.tgt = k; }
+function apply() {
+  const v = q.value.trim().toLowerCase();
+  let n = 0, first = null;
+  for (const it of items) if (it.kind === 'link') {
+    it.on = (!cat || it.l.cat === cat) && (!v || (it.l.title + ' ' + it.l.note + ' ' + host(it.l.url)).toLowerCase().includes(v));
+    it.row.hidden = !it.on; n += it.on; if (it.on) first ||= it;
+  }
+  groups.forEach((g, k) => { const c = g.filter(it => it.kind === 'link' && it.on).length; g[0].on = !!c; sections[k].hidden = !c; sections[k].querySelector('.lbl').textContent = pad(c); });
+  $('empty').hidden = !!n;
+  $('count').innerHTML = `<b>${pad(n)}</b> of ${pad(links.length)} links / ${pad(groups.length)} collections`;
+  document.querySelectorAll('.chip').forEach(b => b.setAttribute('aria-current', b.dataset.c === cat));
+  if (v && first) fly(first); else if (cat && first) fly(groups[first.col][0]); else V.tgt = nearest(V.tgt);
+}
+function show(it) {                                      // the card in front fills the side panel
+  cur = it; const L = it.kind === 'link';
+  $('card').style.setProperty('--h', it.c.hue);
+  $('c-cat').textContent = L ? `${pad(it.col + 1)} / ${it.c.name}` : `Collection ${pad(it.col + 1)} of ${pad(it.of)}`;
+  $('c-title').textContent = L ? it.l.title : it.c.name; $('c-note').textContent = L ? it.l.note : it.c.blurb || '';
+  $('c-host').textContent = L ? host(it.l.url) : `${pad(it.n)} links`; $('c-date').textContent = L ? 'Added ' + it.l.added : 'Keep turning';
+  $('c-go').hidden = !L; if (L) $('c-go').href = it.l.url;
+  document.querySelector('.r.on')?.classList.remove('on');
+  if (L) it.row.classList.add('on');
+  if (!$('index').matches(':hover') && Math.abs(V.tgt - V.u) < 1) (L ? it.row : sections[it.col]).scrollIntoView({ block: 'nearest' });   // the index follows along once the tower settles
+}
+$('chips').onclick = e => { const b = e.target.closest('.chip'); if (b) { cat = b.dataset.c; apply(); } };
+q.oninput = apply;
+$('clear').onclick = () => { q.value = ''; cat = ''; apply(); q.focus(); };
+$('ix').onclick = () => { const open = $('index').hidden; $('index').hidden = !open; $('ix').setAttribute('aria-expanded', open); };
+$('index').addEventListener('pointerover', e => { const r = e.target.closest('.r'); if (r) fly(hot = items[r.dataset.k]); });
+$('index').addEventListener('focusin', e => { const r = e.target.closest('.r'); if (r) fly(hot = items[r.dataset.k]); });
+$('index').addEventListener('pointerleave', () => hot = null);
+addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); q.focus(); }
+  if (e.key === 'Escape') { if (document.activeElement === q) { q.value = ''; apply(); q.blur(); } else if (!$('index').hidden) $('ix').click(); }
+});
+
+/* ---------- cards: one print per link, painted on a 2D canvas and uploaded as a texture layer ---------- */
+// ponytail: one 480x410 layer per card (~1 MB of GPU memory each); halve TW/TH past ~150 links
+const TW = 480, TH = 410, INK = '#07080a', PAPER = '#eef0ea';
+const rng = a => () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const pc = Object.assign(document.createElement('canvas'), { width: TW, height: TH }), px = pc.getContext('2d');
+function fit(text, maxW, maxH, max) {                    // largest display size where the wrapped title fits the box
+  const words = text.toUpperCase().split(/\s+/);
+  for (let s = max; s > 18; s -= 2) {
+    px.font = `800 ${s}px Unbounded`;
+    const lines = []; let c = '';
+    for (const w of words) { const t = c ? c + ' ' + w : w; if (c && px.measureText(t).width > maxW) { lines.push(c); c = w; } else c = t; }
+    lines.push(c);
+    if (lines.every(l => px.measureText(l).width <= maxW) && lines.length * s * 1.08 <= maxH) return { s, lines };
+  }
+  return { s: 18, lines: [text.toUpperCase()] };
+}
+function paint(it, icon) {
+  const h = it.c.hue, isCat = it.kind === 'cat', paper = !isCat && (it.j + it.col) % 3 === 1, r = rng(hash(isCat ? it.c.id : it.l.url));
+  const acc = `hsl(${h} 90% 62%)`, fg = isCat || paper ? INK : PAPER, mono = s => px.font = `500 ${s}px "JetBrains Mono"`;
+  px.globalAlpha = 1; px.textAlign = 'left'; px.textBaseline = 'alphabetic';
+  px.fillStyle = isCat ? acc : paper ? PAPER : `hsl(${h} 14% 8%)`; px.fillRect(0, 0, TW, TH);
+  if (!isCat && !paper) { const g = px.createRadialGradient(TW, 0, 0, TW, 0, 380); g.addColorStop(0, `hsl(${h} 90% 55% / .42)`); g.addColorStop(1, `hsl(${h} 90% 55% / 0)`); px.fillStyle = g; px.fillRect(0, 0, TW, TH); }
+  px.fillStyle = fg; mono(15);
+  px.fillText(isCat ? 'COLLECTION' : `HX-${pad(it.i + 1, 3)}`, 28, 42);
+  px.textAlign = 'right'; px.fillText(isCat ? `${pad(it.col + 1)} / ${pad(it.of)}` : it.c.name.toUpperCase(), TW - 28, 42);
+  px.fillText(isCat ? '↓' : '↗', TW - 28, TH - 26); px.textAlign = 'left';
+  px.fillText(isCat ? `${pad(it.n)} LINKS` : host(it.l.url).toUpperCase(), 28, TH - 26);
+  px.globalAlpha = .3; px.fillRect(28, 56, TW - 56, 1); px.fillRect(28, TH - 54, TW - 56, 1); px.globalAlpha = 1;
+  if (isCat) { px.font = '800 190px Unbounded'; px.fillText(pad(it.col + 1), 18, 236); }
+  else {
+    px.fillStyle = acc; px.fillRect(0, 0, 8, TH);                                  // collection stripe down the edge
+    px.fillStyle = icon ? '#fff' : acc; px.beginPath(); px.roundRect(28, 78, 116, 116, 24); px.fill();
+    if (icon) px.drawImage(icon, 42, 92, 88, 88);
+    else { px.fillStyle = INK; px.font = '800 64px Unbounded'; px.textAlign = 'center'; px.fillText(it.l.title.trim()[0].toUpperCase(), 86, 160); px.textAlign = 'left'; }
+    px.fillStyle = fg;                                                             // seeded barcode: the same URL always prints the same bars
+    for (let x = 168; x < TW - 28;) { const w = 1 + (r() * 4 | 0); if (r() > .35) px.fillRect(x, 78, Math.min(w, TW - 28 - x), 62); x += w + 1 + (r() * 3 | 0); }
+    mono(13); px.globalAlpha = .7; px.fillText(`ADDED ${it.l.added}`, 168, 166); px.fillText(`NO. ${pad(it.j)} OF ${pad(groups[it.col].length - 1)}`, 168, 188); px.globalAlpha = 1;
+  }
+  const t = fit(isCat ? it.c.name : it.l.title, TW - 56, isCat ? 100 : 124, isCat ? 44 : 54);
+  px.fillStyle = fg; px.font = `800 ${t.s}px Unbounded`;
+  t.lines.forEach((ln, k) => px.fillText(ln, 26, TH - 74 - (t.lines.length - 1 - k) * t.s * 1.08));
+  return pc;
+}
+
+/* ---------- the tower: one full-screen shader. Every pixel fires a ray at a cylinder and works out which card it landed on, front wall and back wall, so the spiral never ends ---------- */
+const CAM = 3, NT = 6, PITCH = .98, CARD = .84, TAU = Math.PI * 2;   // camera distance, cards per turn, rise per turn, card height (the cylinder's radius is 1)
+const cv = $('gl'), gl = cv.getContext('webgl2', { antialias: false, alpha: false });
+const VS = `#version 300 es
+void main(){ gl_Position = vec4(vec2(gl_VertexID & 1, gl_VertexID >> 1) * 4. - 1., 0, 1); }`;
+const FS = `#version 300 es
+precision highp float; precision highp sampler2DArray;
+uniform vec2 R, O; uniform float F, U, TWI, YAW, CA, T, N, DPR;
+uniform sampler2DArray A; uniform sampler2D D;
+out vec4 o;
+const float CAM = ${CAM}., NT = ${NT}., PITCH = ${PITCH}, CARD = ${CARD}, TAU = 6.2831853;
+const vec3 BG = vec3(.027, .031, .039), ACC = vec3(.776, 1., .239);
+float h21(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
+vec4 face(vec3 h, float side){                         // h = where the ray met the cylinder; side: 1 front wall, -1 back wall seen through the gaps
+  float turn = (atan(h.x, h.z) + TWI * h.y + YAW) / TAU;
+  float m = round((-turn * PITCH - h.y) / PITCH), a = (turn + m) * NT + U, k = floor(a + .5), layer = mod(k, N);
+  vec2 l = vec2(a - k, (-(turn + m) * PITCH - h.y) / CARD);
+  vec4 d = texelFetch(D, ivec2(int(layer), 0), 0);     // r = visible, g = lifted
+  vec2 q = abs(l * vec2(TAU / NT, CARD)) - vec2(TAU / NT * .47, CARD * .5) + .045;
+  float sd = length(max(q, 0.)) + min(max(q.x, q.y), 0.) - .045, al = 1. - smoothstep(-fwidth(sd) * 1.5, 0., sd);
+  vec3 c = texture(A, vec3(l.x / .94 + .5, l.y + .5, layer), side < 0. ? 1.5 : 0.).rgb;
+  c = mix(BG + dot(c, vec3(.3, .6, .1)) * .09, c, d.r);
+  if (side > 0.) {
+    c *= mix(.5, 1.06, smoothstep(.25, 1., h.z)) * (1. + .1 * d.g);
+    c += pow(max(dot(normalize(h.xz), vec2(.42, .907)), 0.), 30.) * .16 * d.r;   // a strip of gloss where the film catches the light
+    c = mix(c, ACC, smoothstep(-.02, -.012, sd) * d.g);                           // the card in front gets an accent edge
+  } else c = mix(BG, c, .24);
+  return vec4(c, al);
+}
+vec3 scene(vec2 p){
+  vec3 rd = vec3(p / F, -1.), ro = vec3(0, 0, CAM);
+  float A2 = rd.x * rd.x + 1., disc = CAM * CAM - A2 * (CAM * CAM - 1.), s = sqrt(max(disc, 0.));
+  vec4 b = face(ro + rd * ((CAM + s) / A2), -1.), f = face(ro + rd * ((CAM - s) / A2), 1.);
+  float hit = smoothstep(0., fwidth(disc) * 1.5, disc);
+  vec3 col = BG + .03 * exp(-dot(p, p) * .9);
+  col = mix(col, b.rgb, b.a * hit);
+  return mix(col, f.rgb, f.a * hit);
+}
+void main(){
+  vec2 p = (vec2(gl_FragCoord.x / DPR, R.y - gl_FragCoord.y / DPR) - O) / (R.y * .5); p.y = -p.y;
+  vec3 col = vec3(scene(p + vec2(0, CA)).r, scene(p).g, scene(p - vec2(0, CA)).b);   // speed splits the colours along the direction of travel
+  vec2 uv = gl_FragCoord.xy / (R * DPR);
+  col = mix(BG, col, .3 + .7 * smoothstep(0., .2, uv.y) * (1. - smoothstep(.8, 1., uv.y)));
+  col += (h21(gl_FragCoord.xy + T) - .5) * .045;
+  o = vec4(col, 1);
+}`;
+let U = {}, DPR = 1, W = 0, H = 0, F = 2, OX = 0, OY = 0;
+const data = new Uint8Array(N * 4);
+function initGL() {
+  const prog = gl.createProgram();
+  for (const [type, src] of [[gl.VERTEX_SHADER, VS], [gl.FRAGMENT_SHADER, FS]]) {
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw Error(gl.getShaderInfoLog(s));
+    gl.attachShader(prog, s);
+  }
+  gl.linkProgram(prog); gl.useProgram(prog);
+  for (const n of ['R', 'O', 'F', 'U', 'TWI', 'YAW', 'CA', 'T', 'N', 'DPR', 'A', 'D']) U[n] = gl.getUniformLocation(prog, n);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D_ARRAY, gl.createTexture());
+  gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 6, gl.RGBA8, TW, TH, N);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+  gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, N, 1);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.uniform1i(U.A, 0); gl.uniform1i(U.D, 1); gl.uniform1f(U.N, N);
+}
+function upload(it, icon) {
+  gl.activeTexture(gl.TEXTURE0);
+  gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, it.layer, TW, TH, 1, gl.RGBA, gl.UNSIGNED_BYTE, paint(it, icon));
+}
+function size() {                                        // the tower stands between the index and the side panel, or above the bottom sheet on small screens
+  DPR = Math.min(devicePixelRatio, 2); W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR; gl.viewport(0, 0, cv.width, cv.height);
+  const wide = W >= 1000, bar = W < 760 ? 103 : 55, l = wide ? 300 : 0, r = wide ? 380 : 0, b = wide ? 0 : 178;
+  const half = wide ? Math.min(.36 * H, .44 * (W - l - r)) : Math.min(.62 * W, .42 * (H - bar - b));
+  F = half * 2 / H * Math.sqrt(CAM * CAM - 1); OX = l + (W - l - r) / 2; OY = bar + (H - bar - b) / 2;
+  gl.uniform2f(U.R, W, H); gl.uniform2f(U.O, OX, OY); gl.uniform1f(U.F, F); gl.uniform1f(U.DPR, DPR);
+}
+function pick(x, y) {                                    // screen px -> the card under it on the front wall; mirrors face() in the shader
+  const dx = (x - OX) / (H / 2) / F, dy = -(y - OY) / (H / 2) / F, A2 = dx * dx + 1, disc = CAM * CAM - A2 * (CAM * CAM - 1);
+  if (disc <= 0) return null;
+  const t = (CAM - Math.sqrt(disc)) / A2, hy = dy * t, turn = (Math.atan2(dx * t, CAM - t) + V.tw * hy + V.yaw) / TAU;
+  const m = Math.round((-turn * PITCH - hy) / PITCH), a = (turn + m) * NT + V.u, k = Math.floor(a + .5), it = items[mod(k, N)];
+  return Math.abs(a - k) < .47 && Math.abs((-(turn + m) * PITCH - hy) / CARD) < .5 && it.on ? { it, k } : null;
+}
+
+/* ---------- input and the frame loop ---------- */
+let drag = null, moved = false, snapT = 0, mxN = 0, ready = 0;
+function tower() {
+  const curEl = $('cur'), cardPx = () => TAU / NT * F / (CAM - 1) * H / 2;     // width of the front card on screen
+  cv.onpointerdown = e => { drag = { x: e.clientX, y: e.clientY, t: e.timeStamp, d: 0, v: 0 }; clearTimeout(snapT); cv.setPointerCapture(e.pointerId); cv.classList.add('drag'); };
+  cv.onpointermove = e => {
+    mxN = e.clientX / W - .5;
+    if (drag) {                                          // a screw: dragging sideways turns it, dragging up or down winds it
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y, du = -(dx + dy * TAU / PITCH) / cardPx(), dt = Math.max(e.timeStamp - drag.t, 4) / 1000;
+      V.tgt += du; drag.v = drag.v * .6 + du / dt * .4; drag.d += Math.hypot(dx, dy);
+      Object.assign(drag, { x: e.clientX, y: e.clientY, t: e.timeStamp });
+    } else if (e.pointerType === 'mouse') {
+      const p = pick(e.clientX, e.clientY); hov = p && p.it;
+      cv.classList.toggle('over', !!p); curEl.classList.toggle('on', !!p);
+      if (p) { curEl.textContent = p.k !== Math.round(V.tgt) ? 'View' : p.it.kind === 'cat' ? 'Filter' : 'Open ↗'; curEl.style.transform = `translate(${e.clientX + 14}px,${e.clientY + 16}px)`; }
+    }
+  };
+  cv.onpointerup = cv.onpointercancel = e => {
+    cv.classList.remove('drag'); const d = drag; drag = null; if (!d) return;
+    moved = d.d > 6; if (moved) V.tgt = nearest(V.tgt + (e.timeStamp - d.t > 80 ? 0 : clamp(d.v * .2, -5, 5)));
+  };
+  cv.onpointerleave = () => { hov = null; curEl.classList.remove('on'); };
+  cv.onclick = e => {                                    // the front card opens its site (or filters, if it is a collection); any other card comes to the front
+    const p = !moved && pick(e.clientX, e.clientY); if (!p) return;
+    if (p.k !== Math.round(V.tgt)) V.tgt = p.k;
+    else if (p.it.kind === 'link') window.open(p.it.l.url, '_blank', 'noopener');
+    else { cat = cat === p.it.c.id ? '' : p.it.c.id; apply(); }
+  };
+  addEventListener('wheel', e => {
+    if (e.target.closest('#index,.bar')) return;
+    e.preventDefault(); V.tgt += (e.deltaY + e.deltaX) * (e.deltaMode ? 30 : 1) / 120;
+    clearTimeout(snapT); snapT = setTimeout(() => V.tgt = nearest(V.tgt), 140);
+  }, { passive: false });
+  cv.onkeydown = e => {
+    const d = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[e.key];
+    if (d) { e.preventDefault(); step(d); }
+    if (e.key === 'Enter' && cur && cur.kind === 'link') window.open(cur.l.url, '_blank', 'noopener');
+  };
+
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = clamp((now - last) / 1000, .001, .05), e = k => reduce ? 1 : 1 - Math.exp(-dt * k), pu = V.u; last = now;
+    V.u += (V.tgt - V.u) * e(drag ? 24 : 6.5);
+    V.vel += ((V.u - pu) / dt - V.vel) * e(10);
+    V.tw += ((reduce ? 0 : clamp(V.vel * .03, -.45, .45)) - V.tw) * e(7);            // speed wrings the tower like a towel
+    V.ca = reduce ? 0 : Math.min(Math.abs(V.vel) * .0009, .014);
+    V.yaw += ((reduce ? 0 : mxN * .16 + Math.sin(now / 2400) * .035) - V.yaw) * e(4);
+    const c = items[mod(Math.round(V.u), N)]; if (c !== cur) show(c);
+    for (const it of items) {
+      const shown = ready && now - ready > it.layer * 28;
+      it.dim += ((shown && it.on ? 1 : 0) - it.dim) * e(7);
+      it.lift += ((it === cur || it === hov || it === hot ? 1 : 0) - it.lift) * e(12);
+      data[it.layer * 4] = it.dim * 255; data[it.layer * 4 + 1] = it.lift * 255;
+    }
+    gl.activeTexture(gl.TEXTURE1); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, N, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
+    gl.uniform1f(U.U, V.u); gl.uniform1f(U.TWI, V.tw); gl.uniform1f(U.YAW, V.yaw); gl.uniform1f(U.CA, V.ca); gl.uniform1f(U.T, reduce ? 0 : now % 1000);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  initGL(); size(); addEventListener('resize', size);
+  Promise.race([Promise.all([document.fonts.load('800 60px Unbounded'), document.fonts.load('500 15px "JetBrains Mono"')]), new Promise(r => setTimeout(r, 2500))]).then(async () => {
+    items.forEach(it => upload(it)); gl.generateMipmap(gl.TEXTURE_2D_ARRAY); ready = performance.now();
+    // ponytail: real site icons come from favicone.com because it sends CORS headers (Google's favicon service does not, and WebGL refuses tainted pixels); one at a time so it is never hammered
+    for (const it of items) if (it.kind === 'link') await new Promise(done => {
+      const im = new Image(); im.crossOrigin = 'anonymous'; im.onerror = done;
+      im.onload = () => { if (im.naturalWidth >= 48) { upload(it, im); gl.generateMipmap(gl.TEXTURE_2D_ARRAY); } done(); };
+      im.src = `https://favicone.com/${host(it.l.url)}?s=128`;
+    });
+  });
+  requestAnimationFrame(frame);
+}
+apply();
+if (gl) tower();
+else { cv.hidden = true; $('card').hidden = true; $('index').hidden = false; $('ix').hidden = true; $('tip').textContent = 'WebGL is unavailable, showing the index instead'; }
+</script>
+</body>
+</html>
