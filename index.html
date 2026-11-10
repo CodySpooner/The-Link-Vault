@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>Xody Links</title>
+<title>The Link Vault</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@700;800&display=swap" rel="stylesheet">
@@ -21,8 +21,7 @@
   #gl.drag{cursor:grabbing}#gl.over{cursor:pointer}
 
   .bar{position:fixed;inset:0 0 auto;z-index:10;display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:10px 18px;background:rgba(7,8,10,.74);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
-  .brand{font:800 17px/1 var(--disp);letter-spacing:-.01em;text-transform:uppercase;display:flex;align-items:baseline;gap:9px}
-  .brand i{font:500 10px var(--mono);font-style:normal;color:var(--acc);letter-spacing:.1em}
+  .brand{font:800 17px/1 var(--disp);letter-spacing:-.01em;text-transform:uppercase;white-space:nowrap}
   .chips{display:flex;gap:4px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
   .chip,.btn{all:unset;box-sizing:border-box;flex:none;display:flex;align-items:center;gap:7px;height:32px;padding:0 11px;font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);cursor:pointer;transition:color .2s,background .2s,border-color .2s}
@@ -82,21 +81,22 @@
   @media (max-width:759px){
     :root{--bar:103px}
     .bar{padding:8px 12px;gap:6px 8px}
-    .brand i{display:none}
-    .find{flex:1}
+    .brand{font-size:13px}
+    .find{flex:1;min-width:0}
     .find input{width:100%;height:40px;font-size:16px}
     .find kbd{display:none}
     .btn{height:40px}
     .chips{order:3;flex-basis:100%;min-height:40px;margin:0 -12px;padding:0 8px}
     .chip{height:40px}
   }
+  .void #gl,.void #card,.void #index,.void #ix,.void .hint,.void #clear{display:none!important}
   @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <canvas id="gl" tabindex="0" aria-label="A spiral tower of saved links. Scroll, drag or use the arrow keys to turn it, Enter opens the link in front. The index lists every link."></canvas>
 <header class="bar">
-  <a class="brand" href="#">Xody<i>LINKS</i></a>
+  <a class="brand" href="#">The Link Vault</a>
   <nav class="chips" id="chips" aria-label="Collections"></nav>
   <label class="find"><span class="sr">Search links</span><input id="q" type="search" placeholder="Search links" autocomplete="off"><kbd>/</kbd></label>
   <button class="btn" id="ix" aria-expanded="false" aria-controls="index">Index</button>
@@ -110,7 +110,7 @@
   <a class="btn go" id="c-go" target="_blank" rel="noopener"><span>Open site</span><span aria-hidden="true">↗</span></a>
 </aside>
 <div id="empty" hidden><h2>Nothing<br>on the reel</h2><p class="lbl">No link matches that search.</p><button class="btn" id="clear">Clear search</button></div>
-<div class="hint lbl"><span id="count"></span><span id="tip"><b>Scroll</b> to turn the tower / <b>click</b> the front card to open it</span><span id="sample"></span></div>
+<div class="hint lbl"><span id="count"></span><span id="tip"><b>Scroll</b> to turn the tower / <b>click</b> the front card to open it</span></div>
 <div id="cur" aria-hidden="true">View</div>
 
 <!-- ponytail: cache-bust so a freshly saved link always shows without a hard refresh; document.write keeps it synchronous and working on file:// -->
@@ -138,13 +138,12 @@ $('index').innerHTML = groups.map(g => `<section style="--h:${g[0].c.hue}"><h2>$
   `<a class="r" href="${esc(it.l.url)}" target="_blank" rel="noopener" data-k="${it.layer}"><i>HX-${pad(it.i + 1, 3)}</i><b>${esc(it.l.title)}</b><span>${esc(host(it.l.url))}</span></a>`).join('')}</section>`).join('');
 document.querySelectorAll('.r').forEach(r => items[r.dataset.k].row = r);
 const sections = [...$('index').children];
-if (links.some(l => l.sample)) $('sample').textContent = 'Sample links shown';
 
 /* ---------- state: `u` is how far the strip has been wound, in cards; the card at round(u) faces you ---------- */
 const V = { u: reduce ? 0 : -5, tgt: 0, vel: 0, tw: 0, yaw: 0, ca: 0 };
 const q = $('q');
 let cat = '', cur = null, hov = null, hot = null;
-const nearest = x => { const k0 = Math.round(x); for (let d = 0; d <= N; d++) for (const k of [k0 + d, k0 - d]) if (items[mod(k, N)].on) return k; return k0; };
+const nearest = x => { const k0 = Math.round(x); for (let d = 0; d < N; d++) for (const k of [k0 + d, k0 - d]) if (items[mod(k, N)].on) return k; return k0; };
 const fly = it => V.tgt = it.layer + N * Math.round((V.tgt - it.layer) / N);     // wind to the nearest copy of a card
 function step(d) { let k = Math.round(V.tgt); for (let n = 0; n < N; n++) { k += d; if (items[mod(k, N)].on) break; } V.tgt = k; }
 function apply() {
@@ -385,7 +384,10 @@ function tower() {
   requestAnimationFrame(frame);
 }
 apply();
-if (gl) tower();
+if (!N) {                                                // nothing saved yet: say so instead of spinning an empty tower
+  document.body.classList.add('void');
+  $('empty').querySelector('h2').innerHTML = 'The vault<br>is empty'; $('empty').querySelector('p').textContent = 'Links show up here as they are saved.';
+} else if (gl) tower();
 else { cv.hidden = true; $('card').hidden = true; $('index').hidden = false; $('ix').hidden = true; $('tip').textContent = 'WebGL is unavailable, showing the index instead'; }
 </script>
 </body>
