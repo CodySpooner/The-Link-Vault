@@ -10,6 +10,9 @@ window.LINKBASE = {
     { id: "assets",      name: "Free Assets",        hue: 150, blurb: "Fonts, icons, palettes and images." },
     { id: "learn",       name: "Learn",              hue: 45,  blurb: "Explainers worth coming back to." },
     { id: "rabbit",      name: "Rabbit Holes",       hue: 15,  blurb: "No purpose. Extremely cool." },
+    { id: "startups",    name: "Startups",           hue: 215, blurb: "Real businesses and the numbers behind them." },
   ],
-  links: [],
+  links: [
+    { title: "TrustMRR", url: "https://trustmrr.com", cat: "startups", note: "A database of startups with verified revenue: a leaderboard ranked by monthly income, plus a marketplace to buy and sell them.", added: "2026-11-10", tags: ["Startups", "Revenue", "SaaS"], shot: "shots/trustmrr.com.jpg" },
+  ],
 };
