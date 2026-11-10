@@ -114,6 +114,28 @@
     .chips{order:3;flex-basis:100%;min-height:40px;margin:0 -12px;padding:0 8px}
     .chip{height:40px}
   }
+  /* collection page: one collection, full screen, at its own address (#collection-id) */
+  #page{position:fixed;inset:0;z-index:20;overflow-y:auto;padding:0 clamp(14px,3vw,40px) calc(40px + env(safe-area-inset-bottom));background:radial-gradient(1100px 700px at 100% 0,hsl(var(--h) 90% 55% / .2),transparent 70%),var(--bg);animation:page .5s cubic-bezier(.2,.7,.2,1)}
+  @keyframes page{from{opacity:0;transform:translateY(24px)}}
+  .pnav{display:flex;justify-content:space-between;gap:10px;padding:14px 0}
+  .pnav .btn{height:40px;max-width:48%;white-space:nowrap;overflow:hidden}
+  .pnav .btn:hover{background:var(--fg);border-color:var(--fg);color:#000}
+  .hero{display:grid;gap:16px;padding:clamp(26px,7vh,90px) 0 clamp(22px,4vh,44px)}
+  .hero .lbl i{display:inline-block;width:8px;height:8px;border-radius:50%;background:hsl(var(--h) 90% 62%);margin-right:9px}
+  .hero h1{font:800 clamp(38px,9.5vw,150px)/.92 var(--disp);letter-spacing:-.04em;text-transform:uppercase;overflow-wrap:anywhere}
+  .blurb{max-width:60ch;font-size:15px;color:#cdd0c8}
+  .wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));gap:14px;padding-bottom:26px}
+  .tile{display:grid;gap:9px;align-content:start;padding:12px 12px 14px;border:1px solid var(--line);background:rgba(238,240,234,.03);transition:border-color .2s,background .2s,transform .3s cubic-bezier(.2,.7,.2,1);animation:page .6s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--n)*45ms + .12s)}
+  .tile:hover,.tile:focus-visible{border-color:var(--acc);background:rgba(198,255,61,.06);transform:translateY(-4px);outline:0}
+  .shot{display:grid;place-items:center;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top;background:hsl(var(--h) 30% 12%);font:800 64px var(--disp);color:hsl(var(--h) 90% 62%);text-transform:uppercase}
+  .tile .lbl{display:flex;justify-content:space-between;gap:10px}
+  .tile .lbl b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tile strong{font:800 17px/1.1 var(--disp);letter-spacing:-.01em;text-transform:uppercase;overflow-wrap:anywhere;transition:color .2s}
+  .tile:hover strong,.tile:focus-visible strong{color:var(--acc)}
+  .note{font-size:12.5px;color:#cdd0c8}
+  .tile .tags{flex-wrap:wrap;overflow:visible}
+  .tile .tag{height:22px;pointer-events:none}
+  #index h2 a:hover,#index h2 a:focus-visible{color:var(--acc)}
   .void #gl,.void #card,.void #index,.void #ix,.void .hint,.void #clear{display:none!important}
   @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
@@ -137,6 +159,7 @@
   <a class="btn go" id="c-go" target="_blank" rel="noopener"><span>Open site</span><span aria-hidden="true">↗</span></a>
 </aside>
 <div id="empty" hidden><h2>Nothing<br>on the reel</h2><p class="lbl">No link matches that search.</p><button class="btn" id="clear">Clear search</button></div>
+<main id="page" hidden></main>
 <div class="hint lbl"><span id="count"></span><span id="tip"><b>Scroll</b> to turn the tower / <b>click</b> the front card to open it</span></div>
 <div id="cur" aria-hidden="true">View</div>
 
@@ -161,7 +184,7 @@ const groups = cats.map((c, ci) => ({ c, ci, ls: links.map((l, i) => ({ l, i }))
 const N = items.length;
 
 $('chips').innerHTML = `<button class="chip" data-c="" style="--h:75">All</button>` + groups.map(g => `<button class="chip" data-c="${g[0].c.id}" style="--h:${g[0].c.hue}">${esc(g[0].c.name)}</button>`).join('');
-$('index').innerHTML = groups.map(g => `<section style="--h:${g[0].c.hue}"><h2>${esc(g[0].c.name)}<span class="lbl"></span></h2>${g.slice(1).map(it =>
+$('index').innerHTML = groups.map(g => `<section style="--h:${g[0].c.hue}"><h2><a href="#${g[0].c.id}">${esc(g[0].c.name)}</a><span class="lbl"></span></h2>${g.slice(1).map(it =>
   `<a class="r" href="${esc(it.l.url)}" target="_blank" rel="noopener" data-k="${it.layer}"><i>HX-${pad(it.i + 1, 3)}</i><b>${esc(it.l.title)}</b><span>${esc(host(it.l.url))}</span></a>`).join('')}</section>`).join('');
 document.querySelectorAll('.r').forEach(r => items[r.dataset.k].row = r);
 const sections = [...$('index').children];
@@ -198,7 +221,8 @@ function show(it) {                                      // the card in front fi
   $('c-host').textContent = L ? host(it.l.url) : `${pad(it.n)} links`; $('c-date').textContent = L ? 'Added ' + it.l.added : 'Keep turning';
   $('c-shot').hidden = !(L && it.l.shot); if (L && it.l.shot) $('c-shot').src = it.l.shot;
   $('c-tags').innerHTML = L ? (it.l.tags || []).map(t => `<button class="tag" data-t="${esc(slug(t))}">${esc(t)}</button>`).join('') : '';
-  $('c-go').hidden = !L; if (L) $('c-go').href = it.l.url;
+  const go = $('c-go'); go.href = L ? it.l.url : '#' + it.c.id; go.target = L ? '_blank' : '';     // a link opens its site, a collection opens its page
+  go.firstChild.textContent = L ? 'Open site' : 'Open collection'; go.lastChild.textContent = L ? '↗' : '→';
   document.querySelector('.r.on')?.classList.remove('on');
   if (L) it.row.classList.add('on');
   if (!$('index').matches(':hover') && Math.abs(V.tgt - V.u) < 1) (L ? it.row : sections[it.col]).scrollIntoView({ block: 'nearest' });   // the index follows along once the tower settles
@@ -212,6 +236,7 @@ $('index').addEventListener('pointerover', e => { const r = e.target.closest('.r
 $('index').addEventListener('focusin', e => { const r = e.target.closest('.r'); if (r) fly(hot = items[r.dataset.k]); });
 $('index').addEventListener('pointerleave', () => hot = null);
 addEventListener('keydown', e => {
+  if (!$('page').hidden) { if (e.key === 'Escape') location.hash = ''; return; }
   if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); q.focus(); }
   if (e.key === 'Escape') { if (document.activeElement === q) { q.value = ''; apply(); q.blur(); } else if (!$('index').hidden) $('ix').click(); }
 });
@@ -367,7 +392,7 @@ function tower() {
     } else if (e.pointerType === 'mouse') {
       const p = pick(e.clientX, e.clientY); hov = p && p.it;
       cv.classList.toggle('over', !!p); curEl.classList.toggle('on', !!p);
-      if (p) { curEl.textContent = p.k !== Math.round(V.tgt) ? 'View' : p.it.kind === 'cat' ? 'Filter' : 'Open ↗'; curEl.style.transform = `translate(${e.clientX + 14}px,${e.clientY + 16}px)`; }
+      if (p) { curEl.textContent = p.k !== Math.round(V.tgt) ? 'View' : p.it.kind === 'cat' ? 'Open' : 'Open ↗'; curEl.style.transform = `translate(${e.clientX + 14}px,${e.clientY + 16}px)`; }
     }
   };
   cv.onpointerup = cv.onpointercancel = e => {
@@ -375,26 +400,27 @@ function tower() {
     moved = d.d > 6; if (moved) V.tgt = nearest(V.tgt + (e.timeStamp - d.t > 80 ? 0 : clamp(d.v * .2, -5, 5)));
   };
   cv.onpointerleave = () => { hov = null; curEl.classList.remove('on'); };
-  cv.onclick = e => {                                    // the front card opens its site (or filters, if it is a collection); any other card comes to the front
+  cv.onclick = e => {                                    // the front card opens its site (or its collection page); any other card comes to the front
     const p = !moved && pick(e.clientX, e.clientY); if (!p) return;
     if (p.k !== Math.round(V.tgt)) V.tgt = p.k;
     else if (p.it.kind === 'link') window.open(p.it.l.url, '_blank', 'noopener');
-    else { cat = cat === p.it.c.id ? '' : p.it.c.id; apply(); }
+    else location.hash = p.it.c.id;
   };
   addEventListener('wheel', e => {
-    if (e.target.closest('#index,.bar')) return;
+    if (e.target.closest('#index,.bar,#page')) return;
     e.preventDefault(); V.tgt += (e.deltaY + e.deltaX) * (e.deltaMode ? 30 : 1) / 120;
     clearTimeout(snapT); snapT = setTimeout(() => V.tgt = nearest(V.tgt), 140);
   }, { passive: false });
   cv.onkeydown = e => {
     const d = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[e.key];
     if (d) { e.preventDefault(); step(d); }
-    if (e.key === 'Enter' && cur && cur.kind === 'link') window.open(cur.l.url, '_blank', 'noopener');
+    if (e.key === 'Enter' && cur) cur.kind === 'link' ? window.open(cur.l.url, '_blank', 'noopener') : location.hash = cur.c.id;
   };
 
   let last = performance.now();
   function frame(now) {
     requestAnimationFrame(frame);
+    if (!$('page').hidden) return;                       // a collection page covers the tower, so it rests
     const dt = clamp((now - last) / 1000, .001, .05), e = k => reduce ? 1 : 1 - Math.exp(-dt * k), pu = V.u; last = now;
     V.u += (V.tgt - V.u) * e(drag ? 24 : 6.5);
     V.vel += ((V.u - pu) / dt - V.vel) * e(10);
@@ -433,6 +459,30 @@ if (!N) {                                                // nothing saved yet: s
   $('empty').querySelector('h2').innerHTML = 'The vault<br>is empty'; $('empty').querySelector('p').textContent = 'Links show up here as they are saved.';
 } else if (gl) tower();
 else { cv.hidden = true; $('card').hidden = true; $('index').hidden = false; $('ix').hidden = true; $('tip').textContent = 'WebGL is unavailable, showing the index instead'; }
+
+/* ---------- collection pages: the address decides. #collection-id shows that collection as a wall of its links, anything else shows the tower ---------- */
+function route() {
+  const k = groups.findIndex(g => g[0].c.id === decodeURIComponent(location.hash.slice(1))), g = groups[k], pg = $('page'), was = !pg.hidden;
+  pg.hidden = !g; document.title = g ? `${g[0].c.name} / The Link Vault` : 'The Link Vault';
+  if (!g) { if (was) cv.focus(); return; }
+  const c = g[0].c, near = d => groups[mod(k + d, groups.length)][0].c;
+  pg.style.setProperty('--h', c.hue);
+  pg.innerHTML = `<nav class="pnav"><a class="btn" href="#">← The vault</a><button class="btn" id="share">Copy link</button></nav>
+    <header class="hero"><p class="lbl"><i></i>Collection ${pad(k + 1)} of ${pad(groups.length)} / ${pad(g.length - 1)} links</p><h1>${esc(c.name)}</h1><p class="blurb">${esc(c.blurb || '')}</p></header>
+    <div class="wall">${g.slice(1).map((it, n) => `<a class="tile" href="${esc(it.l.url)}" target="_blank" rel="noopener" style="--n:${n}">
+      ${it.l.shot ? `<img class="shot" src="${esc(it.l.shot)}" alt="" loading="lazy">` : `<span class="shot">${esc(it.l.title.trim()[0])}</span>`}
+      <span class="lbl">HX-${pad(it.i + 1, 3)}<b>${esc(host(it.l.url))} ↗</b></span>
+      <strong>${esc(it.l.title)}</strong><span class="note">${esc(it.l.note)}</span>
+      <span class="tags">${(it.l.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</span></a>`).join('')}</div>
+    ${groups.length > 1 ? `<nav class="pnav"><a class="btn" href="#${near(-1).id}">← ${esc(near(-1).name)}</a><a class="btn" href="#${near(1).id}">${esc(near(1).name)} →</a></nav>` : ''}`;
+  pg.scrollTop = 0; pg.querySelector('a').focus({ preventScroll: true });
+}
+$('page').onclick = e => {                               // phones get their share sheet, everything else copies the address
+  if (e.target.id !== 'share') return;
+  (matchMedia('(hover: none)').matches && navigator.share ? navigator.share({ title: document.title, url: location.href })
+    : navigator.clipboard.writeText(location.href).then(() => e.target.textContent = 'Copied')).catch(() => {});
+};
+addEventListener('hashchange', route); route();
 </script>
 </body>
 </html>
