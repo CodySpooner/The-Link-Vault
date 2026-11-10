@@ -2,9 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <title>The Link Vault</title>
+<meta name="description" content="A vault of links worth keeping.">
+<!-- add-to-home-screen: icon, name and full-screen launch -->
+<meta name="theme-color" content="#07080a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Link Vault">
+<!-- the preview card chat apps show when the address is pasted -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="The Link Vault">
+<meta property="og:description" content="A vault of links worth keeping.">
+<meta property="og:image" content="https://codyspooner.github.io/The-Link-Vault/og.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@700;800&display=swap" rel="stylesheet">
@@ -53,6 +69,7 @@
   .r:hover i,.r:hover span,.r:focus-visible i,.r:focus-visible span{color:#000}
 
   #card{position:fixed;z-index:8;right:30px;top:calc(50% + var(--bar)/2);translate:0 -50%;width:330px;display:grid;gap:14px;padding-left:18px;border-left:1px solid var(--line)}
+  #c-shot{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;object-position:top;border:1px solid var(--line)}
   #card h2{font:800 clamp(24px,2.4vw,36px)/1.04 var(--disp);letter-spacing:-.02em;text-transform:uppercase;overflow-wrap:anywhere}
   #card p{color:#cdd0c8;font-size:13.5px;min-height:3em}
   .tags{display:flex;flex-wrap:wrap;gap:5px}
@@ -76,14 +93,14 @@
   @media (min-width:1000px){#index[hidden]{display:block!important}#ix{display:none}}
   @media (max-width:999px){
     #index{width:min(350px,100vw)}
-    #card{left:0;right:0;top:auto;bottom:0;translate:none;width:auto;height:210px;gap:7px;align-content:start;padding:13px 14px;background:rgba(7,8,10,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:0;border-top:1px solid var(--line)}
+    #card{left:0;right:0;top:auto;bottom:0;translate:none;width:auto;height:calc(210px + env(safe-area-inset-bottom));gap:7px;align-content:start;padding:13px 14px calc(13px + env(safe-area-inset-bottom));background:rgba(7,8,10,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:0;border-top:1px solid var(--line)}
     #card h2{font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     #card p{font-size:12.5px;min-height:0;height:2.9em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-    #card .meta.lbl{display:none}
+    #card .meta.lbl,#c-shot{display:none}
     .tags{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
     .tag{height:30px}
     .btn.go{height:42px}
-    .hint{left:12px;bottom:222px}
+    .hint{left:12px;bottom:calc(222px + env(safe-area-inset-bottom))}
     #tip,#cur{display:none}
   }
   @media (max-width:759px){
@@ -111,6 +128,7 @@
 </header>
 <aside id="index" aria-label="All links" hidden></aside>
 <aside id="card" aria-live="polite">
+  <img id="c-shot" alt="" hidden>
   <span class="lbl" id="c-cat"></span>
   <h2 id="c-title"></h2>
   <p id="c-note"></p>
@@ -178,6 +196,7 @@ function show(it) {                                      // the card in front fi
   $('c-cat').textContent = L ? `${pad(it.col + 1)} / ${it.c.name}` : `Collection ${pad(it.col + 1)} of ${pad(it.of)}`;
   $('c-title').textContent = L ? it.l.title : it.c.name; $('c-note').textContent = L ? it.l.note : it.c.blurb || '';
   $('c-host').textContent = L ? host(it.l.url) : `${pad(it.n)} links`; $('c-date').textContent = L ? 'Added ' + it.l.added : 'Keep turning';
+  $('c-shot').hidden = !(L && it.l.shot); if (L && it.l.shot) $('c-shot').src = it.l.shot;
   $('c-tags').innerHTML = L ? (it.l.tags || []).map(t => `<button class="tag" data-t="${esc(slug(t))}">${esc(t)}</button>`).join('') : '';
   $('c-go').hidden = !L; if (L) $('c-go').href = it.l.url;
   document.querySelector('.r.on')?.classList.remove('on');
@@ -213,7 +232,7 @@ function fit(text, maxW, maxH, max) {                    // largest display size
   }
   return { s: 18, lines: [text.toUpperCase()] };
 }
-function paint(it, icon) {
+function paint(it) {                                     // it.icon and it.shot are filled in as those images arrive
   const h = it.c.hue, isCat = it.kind === 'cat', paper = !isCat && (it.j + it.col) % 3 === 1, r = rng(hash(isCat ? it.c.id : it.l.url));
   const acc = `hsl(${h} 90% 62%)`, fg = isCat || paper ? INK : PAPER, mono = s => px.font = `500 ${s}px "JetBrains Mono"`;
   px.globalAlpha = 1; px.textAlign = 'left'; px.textBaseline = 'alphabetic';
@@ -228,14 +247,21 @@ function paint(it, icon) {
   if (isCat) { px.font = '800 190px Unbounded'; px.fillText(pad(it.col + 1), 18, 236); }
   else {
     px.fillStyle = acc; px.fillRect(0, 0, 8, TH);                                  // collection stripe down the edge
-    px.fillStyle = icon ? '#fff' : acc; px.beginPath(); px.roundRect(28, 78, 116, 116, 24); px.fill();
-    if (icon) px.drawImage(icon, 42, 92, 88, 88);
-    else { px.fillStyle = INK; px.font = '800 64px Unbounded'; px.textAlign = 'center'; px.fillText(it.l.title.trim()[0].toUpperCase(), 86, 160); px.textAlign = 'left'; }
-    px.fillStyle = fg;                                                             // seeded barcode: the same URL always prints the same bars
-    for (let x = 168; x < TW - 28;) { const w = 1 + (r() * 4 | 0); if (r() > .35) px.fillRect(x, 78, Math.min(w, TW - 28 - x), 62); x += w + 1 + (r() * 3 | 0); }
-    mono(13); px.globalAlpha = .7; px.fillText(`ADDED ${it.l.added}`, 168, 166); px.fillText(`NO. ${pad(it.j)} OF ${pad(groups[it.col].length - 1)}`, 168, 188); px.globalAlpha = 1;
+    if (it.shot) {                                                                 // a screenshot of the site fills the top of the card, its icon tucked into the corner
+      const w = TW - 56, h = 190, sw = it.shot.naturalWidth, sh = Math.min(it.shot.naturalHeight, sw * h / w);
+      px.save(); px.beginPath(); px.roundRect(28, 70, w, h, 12); px.clip(); px.drawImage(it.shot, 0, 0, sw, sh, 28, 70, w, h); px.restore();
+      px.strokeStyle = fg; px.globalAlpha = .25; px.beginPath(); px.roundRect(28.5, 70.5, w - 1, h - 1, 12); px.stroke(); px.globalAlpha = 1;
+      if (it.icon) { px.fillStyle = '#fff'; px.beginPath(); px.roundRect(38, 202, 48, 48, 11); px.fill(); px.drawImage(it.icon, 44, 208, 36, 36); }
+    } else {
+      px.fillStyle = it.icon ? '#fff' : acc; px.beginPath(); px.roundRect(28, 78, 116, 116, 24); px.fill();
+      if (it.icon) px.drawImage(it.icon, 42, 92, 88, 88);
+      else { px.fillStyle = INK; px.font = '800 64px Unbounded'; px.textAlign = 'center'; px.fillText(it.l.title.trim()[0].toUpperCase(), 86, 160); px.textAlign = 'left'; }
+      px.fillStyle = fg;                                                           // seeded barcode: the same URL always prints the same bars
+      for (let x = 168; x < TW - 28;) { const w = 1 + (r() * 4 | 0); if (r() > .35) px.fillRect(x, 78, Math.min(w, TW - 28 - x), 62); x += w + 1 + (r() * 3 | 0); }
+      mono(13); px.globalAlpha = .7; px.fillText(`ADDED ${it.l.added}`, 168, 166); px.fillText(`NO. ${pad(it.j)} OF ${pad(groups[it.col].length - 1)}`, 168, 188); px.globalAlpha = 1;
+    }
   }
-  const t = fit(isCat ? it.c.name : it.l.title, TW - 56, isCat ? 100 : 124, isCat ? 44 : 54);
+  const t = fit(isCat ? it.c.name : it.l.title, TW - 56, isCat ? 100 : it.shot ? 62 : 124, isCat ? 44 : it.shot ? 44 : 54);
   px.fillStyle = fg; px.font = `800 ${t.s}px Unbounded`;
   t.lines.forEach((ln, k) => px.fillText(ln, 26, TH - 74 - (t.lines.length - 1 - k) * t.s * 1.08));
   return pc;
@@ -307,14 +333,14 @@ function initGL() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.uniform1i(U.A, 0); gl.uniform1i(U.D, 1); gl.uniform1f(U.N, N);
 }
-function upload(it, icon) {
+function upload(it) {
   gl.activeTexture(gl.TEXTURE0);
-  gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, it.layer, TW, TH, 1, gl.RGBA, gl.UNSIGNED_BYTE, paint(it, icon));
+  gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, it.layer, TW, TH, 1, gl.RGBA, gl.UNSIGNED_BYTE, paint(it));
 }
 function size() {                                        // the tower stands between the index and the side panel, or above the bottom sheet on small screens
   DPR = Math.min(devicePixelRatio, 2); W = innerWidth; H = innerHeight;
   cv.width = W * DPR; cv.height = H * DPR; gl.viewport(0, 0, cv.width, cv.height);
-  const wide = W >= 1000, bar = W < 760 ? 103 : 55, l = wide ? 300 : 0, r = wide ? 380 : 0, b = wide ? 0 : 210;
+  const wide = W >= 1000, bar = W < 760 ? 103 : 55, l = wide ? 300 : 0, r = wide ? 380 : 0, b = wide ? 0 : $('card').offsetHeight;
   const half = wide ? Math.min(.36 * H, .44 * (W - l - r)) : Math.min(.62 * W, .42 * (H - bar - b));
   F = half * 2 / H * Math.sqrt(CAM * CAM - 1); OX = l + (W - l - r) / 2; OY = bar + (H - bar - b) / 2;
   gl.uniform2f(U.R, W, H); gl.uniform2f(U.O, OX, OY); gl.uniform1f(U.F, F); gl.uniform1f(U.DPR, DPR);
@@ -389,10 +415,13 @@ function tower() {
   initGL(); size(); addEventListener('resize', size);
   Promise.race([Promise.all([document.fonts.load('800 60px Unbounded'), document.fonts.load('500 15px "JetBrains Mono"')]), new Promise(r => setTimeout(r, 2500))]).then(async () => {
     items.forEach(it => upload(it)); gl.generateMipmap(gl.TEXTURE_2D_ARRAY); ready = performance.now();
+    for (const it of items) if (it.kind === 'link' && it.l.shot) {   // screenshots live in this repo, so they can all load at once
+      const im = new Image(); im.onload = () => { it.shot = im; upload(it); gl.generateMipmap(gl.TEXTURE_2D_ARRAY); }; im.src = it.l.shot;
+    }
     // ponytail: real site icons come from favicone.com because it sends CORS headers (Google's favicon service does not, and WebGL refuses tainted pixels); one at a time so it is never hammered
     for (const it of items) if (it.kind === 'link') await new Promise(done => {
       const im = new Image(); im.crossOrigin = 'anonymous'; im.onerror = done;
-      im.onload = () => { if (im.naturalWidth >= 48) { upload(it, im); gl.generateMipmap(gl.TEXTURE_2D_ARRAY); } done(); };
+      im.onload = () => { if (im.naturalWidth >= 48) { it.icon = im; upload(it); gl.generateMipmap(gl.TEXTURE_2D_ARRAY); } done(); };
       im.src = `https://favicone.com/${host(it.l.url)}?s=128`;
     });
   });

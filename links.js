@@ -1,6 +1,7 @@
 // The only file that changes when a link is saved.
 // New category? Add it to `categories` with an unused hue (0-360); the site picks it up automatically.
-// Each link: { title, url, cat, note, added, tags: ["UI", "Assets"] }. Tags are searchable; reuse existing ones before inventing new ones.
+// Each link: { title, url, cat, note, added, tags: ["UI", "Assets"], shot: "shots/example.com.jpg" }.
+// Tags are searchable; reuse existing ones before inventing new ones. `shot` is an 800x500 screenshot of the site, shown on its card.
 window.LINKBASE = {
   categories: [
     { id: "inspiration", name: "Design Inspiration", hue: 340, blurb: "Sites and galleries that raise the bar." },
